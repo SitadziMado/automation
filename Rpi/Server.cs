@@ -96,6 +96,7 @@ namespace Server
         /// </summary>
         /// <param name="clientId">Идентификатор клиента.</param>
         /// <param name="msg">Строка-сообщение.</param>
+        /// <param name="parameters">Параметры, передаваемые клиенту.</param>
         /// <returns>Истина, если успешно.</returns>
         /// <exception cref="SocketException"></exception>
         /// <exception cref="IOException"></exception>
@@ -136,8 +137,12 @@ namespace Server
             }
             catch (SocketException e)
             {
-                // ToDo: дропать клиента.
-                throw e;
+                // Удаляем адрес и клиента.
+                m_addresses.Remove(((IPEndPoint)client.Client.RemoteEndPoint).Address);
+                m_clients.RemoveAt(clientId);
+                return false;
+
+                // throw e;
             }
             catch (IOException e)
             {
@@ -150,8 +155,14 @@ namespace Server
         private const int PendingCooldown = 500;
         private const int DefaultReceiveTimeout = 10000;
 
+        /// <summary>
+        /// Количество клиентов на данный момент.
+        /// </summary>
+        public int Count { get { return m_clients.Count; } }
+
         private List<TcpClient> m_clients = new List<TcpClient>();
         private HashSet<IPAddress> m_addresses = new HashSet<IPAddress>();
+        
         private bool m_listen = false;
         private int m_port;
     }
