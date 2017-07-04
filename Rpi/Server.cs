@@ -22,35 +22,51 @@ namespace Server
 
             Thread thread = new Thread(() =>
             {
-                IPAddress ip = new IPAddress(127 | 0 | 0 | 1 << 24);
-                TcpListener server = new TcpListener(ip, DefaultServerPort);
-                server.Start();
+                IPAddress ip;
+                TcpListener server = null;
 
-                while (m_listen)
+                try
                 {
-                    if (!server.Pending())
+                    ip = new IPAddress(127 | 0 | 0 | 1 << 24);
+                    server = new TcpListener(ip, DefaultServerPort);
+                    server.Start();
+
+                    while (m_listen)
                     {
-                        Thread.Sleep(PendingCooldown);
-                        continue;
-                    }
+                        if (!server.Pending())
+                        {
+                            Thread.Sleep(PendingCooldown);
+                            continue;
+                        }
 
-                    var client = server.AcceptTcpClient();
-                    var address = ((IPEndPoint)client.Client.RemoteEndPoint).Address;
+                        var client = server.AcceptTcpClient();
+                        var address = ((IPEndPoint)client.Client.RemoteEndPoint).Address;
 
-                    if (!m_addresses.Contains(address))
-                    {
-                        using (var sw = new StreamWriter(client.GetStream()))
-                            sw.Write(Message.Ack);
+                        if (!m_addresses.Contains(address))
+                        {
+                            using (var sw = new StreamWriter(client.GetStream()))
+                                sw.Write(Message.Ack);
 
-                        m_addresses.Add(address);
-                        m_clients.Add(client);
+                            m_addresses.Add(address);
+                            m_clients.Add(client);
+                        }
                     }
                 }
-
-                // Останавливаем сервер и уничтожаем клиентов.
-                server.Stop();
-                m_clients.Clear();
-                m_addresses.Clear();
+                catch (SocketException e)
+                {
+                    throw e;
+                }
+                catch (IOException e)
+                {
+                    throw e;
+                }
+                finally
+                {
+                    // Останавливаем сервер и уничтожаем клиентов.
+                    server?.Stop();
+                    m_clients.Clear();
+                    m_addresses.Clear();
+                }
             });
         }
 
