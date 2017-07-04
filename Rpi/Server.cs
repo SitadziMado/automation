@@ -9,13 +9,25 @@ using System.Threading;
 
 namespace Server
 {
+    /// <summary>
+    /// Класс сервера, принимающего клиентов.
+    /// </summary>
     public class Server
     {
-        public Server()
+        /// <summary>
+        /// Конструктор по умолчанию для сервера.
+        /// </summary>
+        /// <param name="port">Порт для принятия клиентов.</param>
+        public Server(int port)
         {
+            m_port = port;
+        } // Server
 
-        }
-
+        /// <summary>
+        /// Начать работу данного сервераю
+        /// </summary>
+        /// <exception cref="SocketException"></exception>
+        /// <exception cref="IOException"></exception>
         public void Start()
         {
             m_listen = true;
@@ -28,7 +40,7 @@ namespace Server
                 try
                 {
                     ip = new IPAddress(127 | 0 | 0 | 1 << 24);
-                    server = new TcpListener(ip, DefaultServerPort);
+                    server = new TcpListener(ip, m_port);
                     server.Start();
 
                     while (m_listen)
@@ -47,6 +59,7 @@ namespace Server
                             using (var sw = new StreamWriter(client.GetStream()))
                                 sw.Write(Message.Ack);
 
+                            client.ReceiveTimeout = DefaultReceiveTimeout;
                             m_addresses.Add(address);
                             m_clients.Add(client);
                         }
@@ -68,18 +81,78 @@ namespace Server
                     m_addresses.Clear();
                 }
             });
-        }
+        } // Start
 
+        /// <summary>
+        /// Завершить работу данного сервера.
+        /// </summary>
         public void Stop()
         {
             m_listen = false;
-        }
+        } // Stop
 
-        private const int DefaultServerPort = 6400;
+        /// <summary>
+        /// Отсылка строки клиенту.
+        /// </summary>
+        /// <param name="clientId">Идентификатор клиента.</param>
+        /// <param name="msg">Строка-сообщение.</param>
+        /// <returns>Истина, если успешно.</returns>
+        /// <exception cref="SocketException"></exception>
+        /// <exception cref="IOException"></exception>
+        public bool SendString(int clientId, string msg, params object[] parameters)
+        {
+            if (clientId < 0 || clientId >= m_clients.Count)
+                return false;
+
+            var client = m_clients[clientId];
+
+            if (client == null)
+                return false;
+
+            try
+            {
+                var stream = client.GetStream();
+
+                using (var sr = new StreamReader(stream))
+                using (var sw = new StreamWriter(stream))
+                {
+                    // Начало формирования сообщения.
+                    var sb = new StringBuilder(msg).Append(" ");
+
+                    // Добавление к сообщению всех его параметров.
+                    foreach (var v in parameters)
+                        sb.AppendFormat(" {0}", v);
+
+                    // Прописываем сообщение клиенту.
+                    sw.Write(sb.ToString());
+
+                    // Получаем подтверждение о получении.
+                    var reply = sr.ReadToEnd();
+
+                    // Сравниваем с тем, что ожидаем.
+                    if (reply != Message.Ack)
+                        return false;
+                }
+            }
+            catch (SocketException e)
+            {
+                // ToDo: дропать клиента.
+                throw e;
+            }
+            catch (IOException e)
+            {
+                throw e;
+            }
+
+            return true;
+        } // SendString
+
         private const int PendingCooldown = 500;
+        private const int DefaultReceiveTimeout = 10000;
 
         private List<TcpClient> m_clients = new List<TcpClient>();
         private HashSet<IPAddress> m_addresses = new HashSet<IPAddress>();
         private bool m_listen = false;
+        private int m_port;
     }
 }
