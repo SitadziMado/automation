@@ -59,9 +59,9 @@ namespace Rpi
             server.AddDevice(ipTextBox.Text, DefaultClientPort);
         }
 
-        public void ClientProc(int id, string msg, object[] parameters)
+        public byte[] ClientProc(int id, string msg, object[] parameters)
         {
-
+            return Encoding.ASCII.GetBytes("drank, promethazine\n");
         }
     }
 }

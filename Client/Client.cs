@@ -116,8 +116,10 @@ namespace Rpi
                         // Берем стрим.
                         var stream = client.GetStream();
 
-                        using (var sr = new StreamReader(stream))
-                        using (var sw = new StreamWriter(stream))
+                        var sr = new StreamReader(stream);
+                        var sw = new StreamWriter(stream);
+                        // using (var sr = new StreamReader(stream))
+                        // using (var sw = new StreamWriter(stream))
                         {
                             // Прочитать приветствие.
                             bool av = stream.DataAvailable;
@@ -139,12 +141,14 @@ namespace Rpi
 
                             // Сохранить адрес сервера.
                             m_endPoint = endPoint;
+                            
+                            // Подключаемся к серверу.
+                            m_client = client;
                             break;
                         }
                     }
 
-                    // Подключаемся к серверу.
-#if LOCAL
+/*#if LOCAL
                     // m_endPoint.Port = 6400;
                     // m_endPoint.Address = IPAddress.Parse("192.168.137.47");
                     m_client = new TcpClient();
@@ -153,7 +157,7 @@ namespace Rpi
 #else
                     m_client = new TcpClient(m_endPoint);
                     Logger.WriteLine(this, "Установлено подключение к серверу: {0}", m_endPoint.ToString());
-#endif
+#endif*/
                 }
                 catch (SocketException e)
                 {
@@ -173,8 +177,8 @@ namespace Rpi
         }
 
         private const int PendingCooldown = 500;
-        private const int DefaultSendTimeout = 10000;
-        private const int DefaultReceiveTimeout = 10000;
+        private const int DefaultSendTimeout = 10000 * 10;
+        private const int DefaultReceiveTimeout = 10000 * 10;
 
         /// <summary>
         /// Истина, если предыдущее сообщение было доставлено успешно.

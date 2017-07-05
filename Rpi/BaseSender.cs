@@ -64,6 +64,7 @@ namespace Rpi
                     // Прописываем сообщение клиенту.
                     Logger.WriteLine(this, "Отправляю сообщение: {0}", sb);
                     sw.WriteLine(sb.ToString());
+                    sw.Flush();
 
                     // Получаем подтверждение о получении.
                     var reply = sr.ReadLine();
@@ -94,8 +95,8 @@ namespace Rpi
             }
             finally
             {
-                sr?.Close();
-                sw?.Close();
+                // sr?.Close();
+                // sw?.Close();
             }
         } // SendString
 

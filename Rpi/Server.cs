@@ -133,10 +133,11 @@ namespace Rpi
                             // Вызываем процедуру обработки запроса.
                             // ToDo: делать это асинхронно!!!!!!!!!!!!!!!
                             Logger.WriteLine(this, "Вызывается процедура обработки", str);
-                            m_clientProc(i, req[0], req.Skip(1).ToArray());
+                            var data = m_clientProc(i, req[0], req.Skip(1).ToArray());
+                            stream.Write(data, 0, data.Length);
 
-                            sr.Close();
-                            sw.Close();
+                            // sr.Close();
+                            // sw.Close();
                         }
                     }
 
@@ -300,5 +301,5 @@ namespace Rpi
         private ClientProc m_clientProc = null;
     }
 
-    public delegate void ClientProc(int id, string msg, object[] parameters);
+    public delegate byte[] ClientProc(int id, string msg, object[] parameters);
 }
