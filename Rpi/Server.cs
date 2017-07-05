@@ -18,9 +18,15 @@ namespace Rpi
         /// Конструктор по умолчанию для сервера.
         /// </summary>
         /// <param name="port">Порт для принятия клиентов.</param>
-        public Server(int port) :
+        public Server(int port, ClientProc clientProc) :
             base(port)
         {
+            if (clientProc == null)
+                throw new ArgumentNullException(
+                    "Укажите ненулевой делегат процедуры клиента."
+                );
+
+            m_clientProc = clientProc;
         } // Server
 
         /// <summary>
@@ -28,7 +34,7 @@ namespace Rpi
         /// </summary>
         ~Server()
         {
-            Logger.WriteLine(this, "Уничтожение сервера");
+            // Logger.WriteLine(this, "Уничтожение сервера");
         }
 
         /// <summary>
@@ -39,9 +45,9 @@ namespace Rpi
         public void Start()
         {
             Logger.WriteLine(this, "Начало работы сервера");
-            m_listen = true;
+            listen = true;
 
-            Thread thread = new Thread(() =>
+            Thread listenerThread = new Thread(() =>
             {
                 IPAddress ip;
                 TcpListener server = null;
@@ -52,9 +58,9 @@ namespace Rpi
                     ip = new IPAddress(127 | 0 | 0 | 1 << 24);
                     server = new TcpListener(ip, port);
                     server.Start();
-                    Logger.WriteLine(this, "Сервер начал прослушивание на порту {0}", port);
+                    Logger.WriteLine(this, "Сервер начал прослушивание на порте {0}", port);
 
-                    while (m_listen)
+                    while (listen)
                     {
                         // Проверяем, есть ли доступные подключения.
                         if (!server.Pending())
@@ -101,8 +107,43 @@ namespace Rpi
                     m_addresses.Clear();
                 }
             });
+            // listenerThread.Start();
 
-            thread.Start();
+            Thread pollThread = new Thread(() =>
+            {
+                while (listen)
+                {
+                    for (int i = 0; i < m_clients.Count; ++i)
+                    {
+                        var c = m_clients[i];
+
+                        // Если есть данные, то обрабатываем запрос.
+                        if (c.Available > 0)
+                        {
+                            // Берем стрим.
+                            var stream = c.GetStream();
+                            var sr = new StreamReader(stream);
+                            var sw = new StreamWriter(stream);
+
+                            // Получаем запрос
+                            var str = sr.ReadLine().Trim();
+                            var req = str.Split(' ');
+                            Logger.WriteLine(this, "Принято сообщение: `{0}`", str);
+
+                            // Вызываем процедуру обработки запроса.
+                            // ToDo: делать это асинхронно!!!!!!!!!!!!!!!
+                            Logger.WriteLine(this, "Вызывается процедура обработки", str);
+                            m_clientProc(i, req[0], req.Skip(1).ToArray());
+
+                            sr.Close();
+                            sw.Close();
+                        }
+                    }
+
+                    Thread.Sleep(PendingCooldown);
+                }
+            });
+            pollThread.Start();
         } // Start
 
         /// <summary>
@@ -111,7 +152,7 @@ namespace Rpi
         public void Stop()
         {
             Logger.WriteLine(this, "Запрос на остановку работы сервера");
-            m_listen = false;
+            listen = false;
         } // Stop
 
         /// <summary>
@@ -123,6 +164,7 @@ namespace Rpi
         /// <returns>Истина, если успешно.</returns>
         /// <exception cref="SocketException"></exception>
         /// <exception cref="IOException"></exception>
+        [Obsolete("Не использовать этот метод.")]
         public bool SendString(int clientId, string msg, params object[] parameters)
         {
             if (clientId < 0 || clientId >= m_clients.Count)
@@ -136,7 +178,7 @@ namespace Rpi
 
             try
             {
-                return SendStringToClient(client, msg, parameters);
+                return SendStringToClient(client, msg, parameters) != null;
             }
             catch (SocketException e)
             {
@@ -159,7 +201,15 @@ namespace Rpi
         {
             try
             {
-                using (var client = new TcpClient(hostname, port))
+                Logger.WriteLine(
+                    this, 
+                    "Попытка присоединиться к адресу {0}:{1}",
+                    hostname,
+                    port
+                );
+
+                var client = new TcpClient(hostname, port);
+                // using (var client = new TcpClient(hostname, port))
                 {
                     client.Client.SendTimeout = DefaultSendTimeout;
                     client.Client.ReceiveTimeout = DefaultReceiveTimeout;
@@ -167,8 +217,10 @@ namespace Rpi
                     // Берем стрим.
                     var stream = client.GetStream();
 
-                    using (var sr = new StreamReader(stream))
-                    using (var sw = new StreamWriter(stream))
+                    var sr = new StreamReader(stream);
+                    var sw = new StreamWriter(stream);
+                    // using (var sr = new StreamReader(stream))
+                    // using (var sw = new StreamWriter(stream))
                     {
                         // Пишем приветствие клиенту.
                         Logger.WriteLine(this, "Отправка приветствия");
@@ -177,7 +229,7 @@ namespace Rpi
 
                         // Ожидаем ответ.
                         var reply = sr.ReadLine();
-                        Logger.WriteLine(this, "Ответ получен: {0}", reply);
+                        Logger.WriteLine(this, "Ответ получен: `{0}`", reply);
 
                         // Если ответ не тот, то игнорируем клиента.
                         if (reply != Message.Ack)
@@ -185,11 +237,29 @@ namespace Rpi
                             Logger.WriteLine(this, "Подтверждение неверно, ошибка");
                             return false;
                         }
+
+                        // Принимаем клиента при наличии подключения.
+                        var address = ((IPEndPoint)client.Client.RemoteEndPoint).Address;
+
+                        // Если клиент новый, то добавляем его.
+                        if (!m_addresses.Contains(address))
+                        {
+                            // Отправляем подтверждение о подключении.
+                            Logger.WriteLine(this, "Отправляем подтверждение о принятии подключения");
+                            // using (var sw = new StreamWriter(client.GetStream()))
+                            sw.Write(Message.Ack);
+
+                            client.SendTimeout = DefaultSendTimeout;
+                            client.ReceiveTimeout = DefaultReceiveTimeout;
+                            m_addresses.Add(address);
+                            m_clients.Add(client);
+                        }
                     }
                 }
             }
             catch (SocketException /*e*/)
             {
+                Logger.WriteLine(this, "Попытка соединения оказалась неудачной");
                 return false;
             }
 
@@ -205,9 +275,30 @@ namespace Rpi
         /// </summary>
         public int Count { get { return m_clients.Count; } }
 
+        /// <summary>
+        /// Список адресов клиентов.
+        /// </summary>
+        public string[] ClientAddressses
+        {
+            get
+            {
+                var list = new List<string>();
+                foreach (var v in m_addresses)
+                    list.Add(v.ToString());
+                return list.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Истина, если сервер работает в данный момент.
+        /// </summary>
+        public bool On { get { return listen; } }
+
         private List<TcpClient> m_clients = new List<TcpClient>();
         private HashSet<IPAddress> m_addresses = new HashSet<IPAddress>();
-        
-        private bool m_listen = false;
+
+        private ClientProc m_clientProc = null;
     }
+
+    public delegate void ClientProc(int id, string msg, object[] parameters);
 }

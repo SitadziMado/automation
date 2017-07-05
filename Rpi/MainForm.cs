@@ -15,8 +15,7 @@ namespace Rpi
         private const int DefaultServerPort = 6400;
         private const int DefaultClientPort = 6401;
 
-        private Server server = new Server(6400);
-        private Client client = new Client(6401);
+        private Server server;
 
         /// <summary>
         /// Конструктор главной формы.
@@ -24,12 +23,13 @@ namespace Rpi
         public MainForm()
         {
             InitializeComponent();
+            Logger.CreateLogFile();
         }
 
         private void MainForm_Load(object sender, EventArgs e)
         {
+            server = new Server(DefaultServerPort, ClientProc);
             server.Start();
-            client.AsyncWaitForConnection();
         }
 
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -39,13 +39,29 @@ namespace Rpi
 
         private void replyClientButton_Click(object sender, EventArgs e)
         {
-            server.AddDevice("127.0.0.1", DefaultClientPort);
+            server.SendString(0, Message.SendIds, new int[] { 1, 4, 9, 16, 25 });
         }
 
-        private void connectToServerButton_Click(object sender, EventArgs e)
+        private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
         {
-            client.SendString(Message.RequestIds);
+
         }
 
+        private void autoUpdateTimer_Tick(object sender, EventArgs e)
+        {
+            logTextBox.Text = Logger.GetLogString();
+            logTextBox.Select(logTextBox.TextLength, 0);
+            logTextBox.ScrollToCaret();
+        }
+
+        private void connectButton_Click(object sender, EventArgs e)
+        {
+            server.AddDevice(ipTextBox.Text, DefaultClientPort);
+        }
+
+        public void ClientProc(int id, string msg, object[] parameters)
+        {
+
+        }
     }
 }

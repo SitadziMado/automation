@@ -23,15 +23,17 @@ namespace Rpi
             if (filename == null || filename == "")
             {
                 var dt = DateTime.Now;
-                filename = new StringBuilder(LogPrefix)
+                filename = new StringBuilder(LogDir + LogPrefix)
                     .Append(dt.ToShortDateString().Replace('.', '-'))
                     .Append("_")
-                    .Append(dt.ToShortTimeString().Replace('.', '-'))
+                    .Append(dt.ToLongTimeString().Replace(':', '-'))
                     .Append(".txt")
                     .ToString();
             }
             try
             {
+                if (!Directory.Exists(LogDir))
+                    Directory.CreateDirectory(LogDir);
                 file = new StreamWriter(filename, append);
             }
             catch (DirectoryNotFoundException e)
@@ -70,6 +72,7 @@ namespace Rpi
                     .ToString();
                 log.AppendLine(s);
                 file?.WriteLine(s);
+                file?.Flush();
             }
             catch (IOException e)
             {
@@ -106,7 +109,8 @@ namespace Rpi
             return log.ToString();
         }
 
-        private const string LogPrefix = @"/logs/log_";
+        private const string LogDir = @"logs/";
+        private const string LogPrefix = @"log_";
 
         private static StreamWriter file = null;
         private static StringBuilder log = new StringBuilder();

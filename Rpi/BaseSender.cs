@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace Rpi
 {
@@ -20,7 +20,7 @@ namespace Rpi
         public BaseSender(int port)
         {
             this.port = port;
-            Logger.WriteLine(this, "Инициализация клиента на порте {0}", this.port);
+            Logger.WriteLine(this, "Инициализация на порте {0}", this.port);
         }
 
         /// <summary>
@@ -29,25 +29,30 @@ namespace Rpi
         /// <param name="client">Клиент, которому отправляется сообщение.</param>
         /// <param name="msg">Строка-сообщение.</param>
         /// <param name="parameters">Параметры, передаваемые клиенту.</param>
-        /// <returns>Истина, если успешно.</returns>
+        /// <returns>Сообщение при успехе, иначе null.</returns>
         /// <exception cref="SocketException"></exception>
         /// <exception cref="IOException"></exception>
-        protected bool SendStringToClient(TcpClient client, string msg, params object[] parameters)
+        protected string SendStringToClient(TcpClient client, string msg, params object[] parameters)
         {
             Logger.WriteLine(this, "Начало передачи сообщения");
 
             if (client == null)
             {
                 Logger.WriteLine(this, "Нет подключения");
-                return false;
+                return null;
             }
+
+            StreamReader sr = null;
+            StreamWriter sw = null;
 
             try
             {
                 var stream = client.GetStream();
 
-                using (var sr = new StreamReader(stream))
-                using (var sw = new StreamWriter(stream))
+                sr = new StreamReader(stream);
+                sw = new StreamWriter(stream);
+                // using (var sr = new StreamReader(stream))
+                // using (var sw = new StreamWriter(stream))
                 {
                     // Начало формирования сообщения.
                     var sb = new StringBuilder(msg).Append(" ");
@@ -61,15 +66,18 @@ namespace Rpi
                     sw.WriteLine(sb.ToString());
 
                     // Получаем подтверждение о получении.
-                    var reply = sr.ReadToEnd();
-                    Logger.WriteLine(this, "Получено подтверждение: {0}", reply);
+                    var reply = sr.ReadLine();
+                    Logger.WriteLine(this, "Получен ответ: {0}", reply);
 
                     // Сравниваем с тем, что ожидаем.
-                    if (reply != Message.Ack)
+                    /*if (reply != Message.Ack)
                     {
                         Logger.WriteLine(this, "Подтверждение неверно, ошибка");
                         return false;
-                    }
+                    }*/
+
+                    Logger.WriteLine(this, "Отправление успешно");
+                    return reply;
                 }
             }
             catch (SocketException e)
@@ -80,14 +88,21 @@ namespace Rpi
             {
                 throw e;
             }
-
-            Logger.WriteLine(this, "Отправление успешно");
-            return true;
+            catch (InvalidOperationException e)
+            {
+                throw e;
+            }
+            finally
+            {
+                sr?.Close();
+                sw?.Close();
+            }
         } // SendString
 
         /// <summary>
         /// Порт, по которому действует класс.
         /// </summary>
         protected int port;
+        protected bool listen = false;
     }
 }
