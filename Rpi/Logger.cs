@@ -35,6 +35,12 @@ namespace Server
             }
         }
 
+        /// <summary>
+        /// Добавить линию к логу.
+        /// </summary>
+        /// <param name="obj">Объект, из которого происходит запись.</param>
+        /// <param name="msg">Сообщение.</param>
+        /// <exception cref="IOException"></exception>
         public static void WriteLine(object obj, string msg)
         {
             try
@@ -42,10 +48,10 @@ namespace Server
                 var dt = DateTime.Now;
                 var s = new StringBuilder()
                     .AppendFormat(
-                        "{0} {1} ({2}): {3}.", 
-                        dt.ToShortDateString(), 
-                        dt.ToShortTimeString(), 
-                        obj.ToString(), 
+                        "{0} {1} ({2}): {3}.",
+                        dt.ToShortDateString(),
+                        dt.ToShortTimeString(),
+                        obj.ToString(),
                         msg
                     )
                     .ToString();
@@ -53,6 +59,26 @@ namespace Server
                 file?.WriteLine(s);
             }
             catch (IOException e)
+            {
+                throw e;
+            }
+        }
+
+        /// <summary>
+        /// Добавить линию к логу.
+        /// </summary>
+        /// <param name="obj">Объект, из которого происходит запись.</param>
+        /// <param name="formatMsg">Строка форматирования.</param>
+        /// <param name="parameters">Дополнительные параметры.</param>
+        /// <exception cref="IOException"></exception>
+        /// <exception cref="FormatException"></exception>
+        public static void WriteLine(object obj, string formatMsg, params object[] parameters)
+        {
+            try
+            {
+                WriteLine(obj, String.Format(formatMsg, parameters));
+            }
+            catch (FormatException e)
             {
                 throw e;
             }

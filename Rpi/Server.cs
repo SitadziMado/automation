@@ -12,7 +12,7 @@ namespace Server
     /// <summary>
     /// Класс сервера, принимающего клиентов.
     /// </summary>
-    public class Server
+    public class Server : BaseSender
     {
         /// <summary>
         /// Конструктор по умолчанию для сервера.
@@ -75,12 +75,15 @@ namespace Server
                 }
                 finally
                 {
+                    /// ToDo: сделать реконнект.
                     // Останавливаем сервер и уничтожаем клиентов.
                     server?.Stop();
                     m_clients.Clear();
                     m_addresses.Clear();
                 }
             });
+
+            thread.Start();
         } // Start
 
         /// <summary>
@@ -94,7 +97,7 @@ namespace Server
         /// <summary>
         /// Отсылка строки клиенту.
         /// </summary>
-        /// <param name="clientId">Идентификатор клиента.</param>
+        /// <param name="clientId">Клиент, которому отправляется сообщение.</param>
         /// <param name="msg">Строка-сообщение.</param>
         /// <param name="parameters">Параметры, передаваемые клиенту.</param>
         /// <returns>Истина, если успешно.</returns>
@@ -107,52 +110,64 @@ namespace Server
 
             var client = m_clients[clientId];
 
-            if (client == null)
-                return false;
-
             try
             {
-                var stream = client.GetStream();
-
-                using (var sr = new StreamReader(stream))
-                using (var sw = new StreamWriter(stream))
-                {
-                    // Начало формирования сообщения.
-                    var sb = new StringBuilder(msg).Append(" ");
-
-                    // Добавление к сообщению всех его параметров.
-                    foreach (var v in parameters)
-                        sb.AppendFormat(" {0}", v);
-
-                    // Прописываем сообщение клиенту.
-                    sw.Write(sb.ToString());
-
-                    // Получаем подтверждение о получении.
-                    var reply = sr.ReadToEnd();
-
-                    // Сравниваем с тем, что ожидаем.
-                    if (reply != Message.Ack)
-                        return false;
-                }
+                return SendStringToClient(client, msg, parameters);
             }
             catch (SocketException e)
             {
-                // Удаляем адрес и клиента.
-                m_addresses.Remove(((IPEndPoint)client.Client.RemoteEndPoint).Address);
-                m_clients.RemoveAt(clientId);
-                return false;
-
-                // throw e;
+                // ToDo: добавить реконнект и разрыв соединения.
+                throw e;
             }
             catch (IOException e)
             {
                 throw e;
             }
+        }
+
+        /// <summary>
+        /// Запросить соединение у нового клиента.
+        /// </summary>
+        /// <param name="hostname">Адрес клиента.</param>
+        /// <param name="port">Порт, к которому нужно подключиться.</param>
+        /// <returns>Истина, если подключение успешно.</returns>
+        public bool AddDevice(string hostname, int port)
+        {
+            try
+            {
+                using (var client = new TcpClient(hostname, port))
+                {
+                    client.Client.SendTimeout = DefaultSendTimeout;
+                    client.Client.ReceiveTimeout = DefaultReceiveTimeout;
+
+                    // Берем стрим.
+                    var stream = client.GetStream();
+
+                    using (var sr = new StreamReader(stream))
+                    using (var sw = new StreamWriter(stream))
+                    {
+                        // Пишем приветствие клиенту.
+                        sw.Write(Message.Greet);
+
+                        // Ожидаем ответ.
+                        var reply = sr.ReadToEnd();
+
+                        // Если ответ не тот, то игнорируем клиента.
+                        if (reply != Message.Ack)
+                            return false;
+                    }
+                }
+            }
+            catch (SocketException e)
+            {
+                return false;
+            }
 
             return true;
-        } // SendString
+        }
 
         private const int PendingCooldown = 500;
+        private const int DefaultSendTimeout = 10000;
         private const int DefaultReceiveTimeout = 10000;
 
         /// <summary>
