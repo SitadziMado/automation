@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Server
+namespace Rpi
 {
     /// <summary>
     /// Базовый класс для клиента и сервера.
@@ -17,9 +17,10 @@ namespace Server
         /// <summary>
         /// Конструктор по умолчанию.
         /// </summary>
-        public BaseSender()
+        public BaseSender(int port)
         {
-
+            this.port = port;
+            Logger.WriteLine(this, "Инициализация клиента на порте {0}", this.port);
         }
 
         /// <summary>
@@ -56,20 +57,19 @@ namespace Server
                         sb.AppendFormat(" {0}", v);
 
                     // Прописываем сообщение клиенту.
-                    Logger.WriteLine(
-                        this, 
-                        new StringBuilder("Отправляю сообщение: ")
-                        .Append(sb.ToString())
-                        .ToString()
-                    );
+                    Logger.WriteLine(this, "Отправляю сообщение: {0}", sb);
                     sw.Write(sb.ToString());
 
                     // Получаем подтверждение о получении.
                     var reply = sr.ReadToEnd();
+                    Logger.WriteLine(this, "Получено подтверждение: {0}", reply);
 
                     // Сравниваем с тем, что ожидаем.
                     if (reply != Message.Ack)
+                    {
+                        Logger.WriteLine(this, "Подтверждение неверно, ошибка");
                         return false;
+                    }
                 }
             }
             catch (SocketException e)
@@ -81,7 +81,13 @@ namespace Server
                 throw e;
             }
 
+            Logger.WriteLine(this, "Отправление успешно");
             return true;
         } // SendString
+
+        /// <summary>
+        /// Порт, по которому действует класс.
+        /// </summary>
+        protected int port;
     }
 }

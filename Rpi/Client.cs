@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Server
+namespace Rpi
 {
     /// <summary>
     /// Класс клиента.
@@ -19,9 +19,17 @@ namespace Server
         /// Конструктор по умолчанию.
         /// </summary>
         /// <param name="port">Порт, по которому будет происходить общение с сервером.</param>
-        public Client(int port)
+        public Client(int port) :
+            base(port)
         {
-            m_port = port;
+        }
+
+        /// <summary>
+        /// Деструктор.
+        /// </summary>
+        ~Client()
+        {
+            Logger.WriteLine(this, "Уничтожение сервера");
         }
 
         /// <summary>
@@ -34,9 +42,6 @@ namespace Server
         /// <exception cref="IOException"></exception>
         public bool SendString(string msg, params object[] parameters)
         {
-            if (m_client == null)
-                return false;
-
             try
             {
                 return SendStringToClient(m_client, msg, parameters);
@@ -52,7 +57,10 @@ namespace Server
             }
         }
 
-        private void AsyncWaitForConnection()
+        /// <summary>
+        /// Ждать до подключения асинхронно. По подключении устройство имеет адрес сервера.
+        /// </summary>
+        public void AsyncWaitForConnection()
         {
             Thread thread = new Thread(() =>
             {
@@ -62,7 +70,7 @@ namespace Server
                 try
                 {
                     ip = new IPAddress(127 | 0 | 0 | 1 << 24);
-                    server = new TcpListener(ip, m_port);
+                    server = new TcpListener(ip, port);
                     server.Start();
 
                     while (true)
@@ -135,7 +143,5 @@ namespace Server
 
         private IPEndPoint m_endPoint = null;
         private TcpClient m_client = null;
-
-        private int m_port;
     }
 }

@@ -7,7 +7,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 
-namespace Server
+namespace Rpi
 {
     /// <summary>
     /// Класс сервера, принимающего клиентов.
@@ -18,18 +18,27 @@ namespace Server
         /// Конструктор по умолчанию для сервера.
         /// </summary>
         /// <param name="port">Порт для принятия клиентов.</param>
-        public Server(int port)
+        public Server(int port) :
+            base(port)
         {
-            m_port = port;
         } // Server
 
         /// <summary>
-        /// Начать работу данного сервераю
+        /// Деструктор.
+        /// </summary>
+        ~Server()
+        {
+            Logger.WriteLine(this, "Уничтожение сервера");
+        }
+
+        /// <summary>
+        /// Начать работу данного сервера.
         /// </summary>
         /// <exception cref="SocketException"></exception>
         /// <exception cref="IOException"></exception>
         public void Start()
         {
+            Logger.WriteLine(this, "Начало работы сервера");
             m_listen = true;
 
             Thread thread = new Thread(() =>
@@ -39,23 +48,31 @@ namespace Server
 
                 try
                 {
+                    // Подключаемся к адресу по умолчанию.
                     ip = new IPAddress(127 | 0 | 0 | 1 << 24);
-                    server = new TcpListener(ip, m_port);
+                    server = new TcpListener(ip, port);
                     server.Start();
+                    Logger.WriteLine(this, "Сервер начал прослушивание на порту {0}", port);
 
                     while (m_listen)
                     {
+                        // Проверяем, есть ли доступные подключения.
                         if (!server.Pending())
                         {
                             Thread.Sleep(PendingCooldown);
                             continue;
                         }
 
+                        // Принимаем клиента при наличии подключения.
                         var client = server.AcceptTcpClient();
                         var address = ((IPEndPoint)client.Client.RemoteEndPoint).Address;
+                        Logger.WriteLine(this, "Входящее подключение по адресу {0}", address.ToString());
 
+                        // Если клиент новый, то добавляем его.
                         if (!m_addresses.Contains(address))
                         {
+                            // Отправляем подтверждение о подключении.
+                            Logger.WriteLine(this, "Отправляем подтверждение о принятии подключения");
                             using (var sw = new StreamWriter(client.GetStream()))
                                 sw.Write(Message.Ack);
 
@@ -75,8 +92,9 @@ namespace Server
                 }
                 finally
                 {
-                    /// ToDo: сделать реконнект.
+                    // ToDo: сделать реконнект.
                     // Останавливаем сервер и уничтожаем клиентов.
+                    Logger.WriteLine(this, "Остановка работы сервера");
                     server?.Stop();
                     m_clients.Clear();
                     m_addresses.Clear();
@@ -91,6 +109,7 @@ namespace Server
         /// </summary>
         public void Stop()
         {
+            Logger.WriteLine(this, "Запрос на остановку работы сервера");
             m_listen = false;
         } // Stop
 
@@ -106,8 +125,12 @@ namespace Server
         public bool SendString(int clientId, string msg, params object[] parameters)
         {
             if (clientId < 0 || clientId >= m_clients.Count)
+            {
+                Logger.WriteLine(this, "Пока нет доступных клиентов");
                 return false;
+            }
 
+            Logger.WriteLine(this, "Клиент №{0} выбран", clientId);
             var client = m_clients[clientId];
 
             try
@@ -147,18 +170,23 @@ namespace Server
                     using (var sw = new StreamWriter(stream))
                     {
                         // Пишем приветствие клиенту.
+                        Logger.WriteLine(this, "Отправка приветствия");
                         sw.Write(Message.Greet);
 
                         // Ожидаем ответ.
                         var reply = sr.ReadToEnd();
+                        Logger.WriteLine(this, "Ответ получен: {0}", reply);
 
                         // Если ответ не тот, то игнорируем клиента.
                         if (reply != Message.Ack)
+                        {
+                            Logger.WriteLine(this, "Подтверждение неверно, ошибка");
                             return false;
+                        }
                     }
                 }
             }
-            catch (SocketException e)
+            catch (SocketException /*e*/)
             {
                 return false;
             }
@@ -179,6 +207,5 @@ namespace Server
         private HashSet<IPAddress> m_addresses = new HashSet<IPAddress>();
         
         private bool m_listen = false;
-        private int m_port;
     }
 }

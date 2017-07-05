@@ -1,5 +1,6 @@
 ﻿namespace Rpi
 {
+    /// Класс формы.
     partial class MainForm
     {
         /// <summary>
@@ -63,6 +64,7 @@
             this.replyClientButton.TabIndex = 0;
             this.replyClientButton.Text = "Ответить клиенту";
             this.replyClientButton.UseVisualStyleBackColor = true;
+            this.replyClientButton.Click += new System.EventHandler(this.replyClientButton_Click);
             // 
             // connectToServerButton
             // 
@@ -73,6 +75,7 @@
             this.connectToServerButton.TabIndex = 1;
             this.connectToServerButton.Text = "Связь с сервером";
             this.connectToServerButton.UseVisualStyleBackColor = true;
+            this.connectToServerButton.Click += new System.EventHandler(this.connectToServerButton_Click);
             // 
             // textBox1
             // 
@@ -100,6 +103,8 @@
             this.Controls.Add(this.tableLayoutPanel1);
             this.Name = "MainForm";
             this.Text = "Сервер";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
+            this.Load += new System.EventHandler(this.MainForm_Load);
             this.tableLayoutPanel1.ResumeLayout(false);
             this.tableLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
