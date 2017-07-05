@@ -11,6 +11,23 @@ namespace Rpi
     /// </summary>
     public static class Message
     {
+        public static string GetMessageString(MessageType type)
+        {
+            if (message.ContainsKey(type))
+                return message[type];
+            else
+                return null;
+        }
+
+        public static MessageType GetMessageType(string msg)
+        {
+            msg = msg.ToLower();
+            if (messageInv.ContainsKey(msg))
+                return messageInv[msg];
+            else
+                return MessageType.None;
+        }
+
         /// <summary>
         /// Запрос на добавление нового клиента к серверу.
         /// </summary>
@@ -40,5 +57,22 @@ namespace Rpi
         /// Отправка информации.
         /// </summary>
         public const string SendData = "data";
+
+        private static Dictionary<MessageType, string> message = new Dictionary<MessageType, string>()
+        {
+            { MessageType.Greet, Greet },
+            { MessageType.Ack, Ack },
+            { MessageType.RequestIds, RequestIds },
+            { MessageType.RequestData, RequestData },
+            { MessageType.SendIds, SendIds },
+            { MessageType.SendData, SendData },
+        };
+        private static Dictionary<string, MessageType> messageInv = new Dictionary<string, MessageType>(
+            (
+            from v
+            in message
+            where true
+            select v
+            ).ToDictionary(x => x.Value, x => x.Key));
     }
 }

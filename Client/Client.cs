@@ -60,7 +60,7 @@ namespace Rpi
         /// <returns>Истина, если успешно.</returns>
         /// <exception cref="SocketException"></exception>
         /// <exception cref="IOException"></exception>
-        public string SendString(string msg, params object[] parameters)
+        public string SendString(MessageType msg, params object[] parameters)
         {
             try
             {

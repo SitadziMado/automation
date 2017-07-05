@@ -133,7 +133,7 @@ namespace Rpi
                             // Вызываем процедуру обработки запроса.
                             // ToDo: делать это асинхронно!!!!!!!!!!!!!!!
                             Logger.WriteLine(this, "Вызывается процедура обработки", str);
-                            var data = m_clientProc(i, req[0], req.Skip(1).ToArray());
+                            var data = m_clientProc(i, Message.GetMessageType(req[0]), req.Skip(1).ToArray());
                             stream.Write(data, 0, data.Length);
 
                             // sr.Close();
@@ -166,7 +166,7 @@ namespace Rpi
         /// <exception cref="SocketException"></exception>
         /// <exception cref="IOException"></exception>
         [Obsolete("Не использовать этот метод.")]
-        public bool SendString(int clientId, string msg, params object[] parameters)
+        public bool SendString(int clientId, MessageType msg, params object[] parameters)
         {
             if (clientId < 0 || clientId >= m_clients.Count)
             {
@@ -301,5 +301,5 @@ namespace Rpi
         private ClientProc m_clientProc = null;
     }
 
-    public delegate byte[] ClientProc(int id, string msg, object[] parameters);
+    public delegate byte[] ClientProc(int id, MessageType msg, object[] parameters);
 }

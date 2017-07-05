@@ -39,7 +39,7 @@ namespace Rpi
 
         private void replyClientButton_Click(object sender, EventArgs e)
         {
-            server.SendString(0, Message.SendIds, new int[] { 1, 4, 9, 16, 25 });
+            server.SendString(0, MessageType.SendIds, new int[] { 1, 4, 9, 16, 25 });
         }
 
         private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
@@ -59,7 +59,7 @@ namespace Rpi
             server.AddDevice(ipTextBox.Text, DefaultClientPort);
         }
 
-        public byte[] ClientProc(int id, string msg, object[] parameters)
+        public byte[] ClientProc(int id, MessageType msg, object[] parameters)
         {
             return Encoding.ASCII.GetBytes("drank, promethazine\n");
         }

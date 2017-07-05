@@ -32,7 +32,7 @@ namespace Rpi
         /// <returns>Сообщение при успехе, иначе null.</returns>
         /// <exception cref="SocketException"></exception>
         /// <exception cref="IOException"></exception>
-        protected string SendStringToClient(TcpClient client, string msg, params object[] parameters)
+        protected string SendStringToClient(TcpClient client, MessageType msg, params object[] parameters)
         {
             Logger.WriteLine(this, "Начало передачи сообщения");
 
@@ -55,7 +55,7 @@ namespace Rpi
                 // using (var sw = new StreamWriter(stream))
                 {
                     // Начало формирования сообщения.
-                    var sb = new StringBuilder(msg).Append(" ");
+                    var sb = new StringBuilder(Message.GetMessageString(msg)).Append(" ");
 
                     // Добавление к сообщению всех его параметров.
                     foreach (var v in parameters)
