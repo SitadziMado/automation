@@ -73,8 +73,9 @@ namespace Rpi
                         {
                             // Отправляем подтверждение о подключении.
                             Logger.WriteLine(this, "Отправляем подтверждение о принятии подключения");
-                            using (var sw = new StreamWriter(client.GetStream()))
-                                sw.Write(Message.Ack);
+                            // using (var sw = new StreamWriter(client.GetStream()))
+                            var sw = new StreamWriter(client.GetStream());
+                            sw.Write(Message.Ack);
 
                             client.ReceiveTimeout = DefaultReceiveTimeout;
                             m_addresses.Add(address);
@@ -171,10 +172,11 @@ namespace Rpi
                     {
                         // Пишем приветствие клиенту.
                         Logger.WriteLine(this, "Отправка приветствия");
-                        sw.Write(Message.Greet);
+                        sw.WriteLine(Message.Greet);
+                        sw.Flush();
 
                         // Ожидаем ответ.
-                        var reply = sr.ReadToEnd();
+                        var reply = sr.ReadLine();
                         Logger.WriteLine(this, "Ответ получен: {0}", reply);
 
                         // Если ответ не тот, то игнорируем клиента.
@@ -195,8 +197,8 @@ namespace Rpi
         }
 
         private const int PendingCooldown = 500;
-        private const int DefaultSendTimeout = 10000;
-        private const int DefaultReceiveTimeout = 10000;
+        private const int DefaultSendTimeout = 10000 * 10;
+        private const int DefaultReceiveTimeout = 10000 * 10;
 
         /// <summary>
         /// Количество клиентов на данный момент.

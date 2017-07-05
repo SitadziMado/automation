@@ -1,4 +1,6 @@
-﻿using System;
+﻿// #define LOCAL
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -98,7 +100,8 @@ namespace Rpi
                         using (var sw = new StreamWriter(stream))
                         {
                             // Прочитать приветствие.
-                            var msg = sr.ReadToEnd();
+                            bool av = stream.DataAvailable;
+                            var msg = sr.ReadLine();
 
                             // Если это не приветствие, то это не наш клиент.
                             if (!(msg == Message.Greet))
@@ -108,7 +111,8 @@ namespace Rpi
                             }
 
                             // Ответ на приветствие.
-                            sw.Write(Message.Ack);
+                            sw.WriteLine(Message.Ack);
+                            sw.Flush();
 
                             // Сохранить адрес сервера.
                             m_endPoint = endPoint;
@@ -117,7 +121,12 @@ namespace Rpi
                     }
 
                     // Подключаемся к серверу.
+#if LOCAL
+                    m_endPoint.Port = 6400;
                     m_client = new TcpClient(m_endPoint);
+#else
+                    m_client = new TcpClient(m_endPoint);
+#endif
                 }
                 catch (SocketException e)
                 {

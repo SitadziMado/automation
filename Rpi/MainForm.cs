@@ -39,7 +39,7 @@ namespace Rpi
 
         private void replyClientButton_Click(object sender, EventArgs e)
         {
-            server.AddDevice("127.0.0.1", DefaultServerPort);
+            server.AddDevice("127.0.0.1", DefaultClientPort);
         }
 
         private void connectToServerButton_Click(object sender, EventArgs e)
