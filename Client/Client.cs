@@ -77,14 +77,66 @@ namespace Rpi
             }
             catch (SocketException e)
             {
-                // ToDo: добавить реконнект и разрыв соединения.
-                throw e;
+                // throw e;
+                DropConnection();
             }
             catch (IOException e)
             {
-                // ToDo: добавить реконнект и разрыв соединения.
-                throw e;
+                // throw e;
+                DropConnection();
             }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Хотфикс для притягивания байтов с сервера для .tar.gz.
+        /// </summary>
+        /// <returns>Массив байтов, представляющих упаковку информации.</returns>
+        /// <exception cref="SocketException"></exception>
+        /// <exception cref="IOException"></exception>
+        public byte[] PullBytes()
+        {
+            try
+            {
+                int size = m_client.Client.ReceiveBufferSize;
+                byte[] buffer = new byte[size];
+                List<byte> data = new List<byte>();
+
+                var s = m_client.GetStream();
+
+                int waited = 0;
+
+                while (waited < DefaultReceiveTimeout && data.Count == 0)
+                {
+                    Thread.Sleep(PendingCooldown);
+                    waited += PendingCooldown;
+
+                    while (m_client.Available > 0)
+                    {
+                        int length = Math.Min(size, m_client.Available);
+                        s.Read(buffer, 0, length);
+                        data.AddRange(buffer.Take(length));
+                    }
+                }
+
+                if (data.Count == 0)
+                    throw new IOException("Не было получено ни одного байта");
+
+                return data.ToArray();
+            }
+            catch (SocketException e)
+            {
+                // throw e;
+                DropConnection();
+            }
+            catch (IOException e)
+            {
+                // throw e;
+                DropConnection();
+            }
+
+            return null;
         }
 
         /// <summary>
@@ -104,7 +156,7 @@ namespace Rpi
                     server.Start();
                     Logger.WriteLine(this, "Начато ожидание сервера");
 
-                    while (true)
+                    while (listen)
                     {
                         if (!server.Pending())
                         {
@@ -185,52 +237,17 @@ namespace Rpi
             });
             thread.Start();
         }
-
+        
         /// <summary>
-        /// Хотфикс для притягивания байтов с сервера для .tar.gz.
+        /// Оборвать соединение и начать прослушивание.
         /// </summary>
-        /// <returns>Массив байтов, представляющих упаковку информации.</returns>
-        /// <exception cref="SocketException"></exception>
-        /// <exception cref="IOException"></exception>
-        public byte[] PullBytes()
+        private void DropConnection()
         {
-            try
-            {
-                int size = m_client.Client.ReceiveBufferSize;
-                byte[] buffer = new byte[size];
-                List<byte> data = new List<byte>();
-
-                var s = m_client.GetStream();
-
-                int waited = 0;
-
-                while (waited < DefaultReceiveTimeout && data.Count == 0)
-                {
-                    Thread.Sleep(PendingCooldown);
-                    waited += PendingCooldown;
-
-                    while (m_client.Available > 0)
-                    {
-                        s.Read(buffer, 0, Math.Min(size, m_client.Available));
-                        data.AddRange(buffer);
-                    }
-                }
-
-                if (data.Count == 0)
-                    throw new IOException("Не было получено ни одного байта");
-
-                return data.ToArray();
-            }
-            catch (SocketException e)
-            {
-                throw e;
-            }
-            catch (IOException e)
-            {
-                throw e;
-            }
+            Logger.WriteLine(this, "Соединение разорвано");
+            m_client = null;
+            m_endPoint = null;
+            AsyncWaitForConnection();
         }
-
 
         private const int PendingCooldown = 500;
         private const int DefaultSendTimeout = 10000 * 10;
@@ -242,7 +259,7 @@ namespace Rpi
         public bool Connected { get { return m_client != null; } }
 
         /// ToDo: пофиксить это дело
-        public ConnectionState Connection { get { return ConnectionState.NotConnected; } }
+        // public ConnectionState Connection { get { return ConnectionState.NotConnected; } }
 
         /// <summary>
         /// Адрес сервера.

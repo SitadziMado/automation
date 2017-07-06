@@ -83,7 +83,7 @@ namespace Rpi
                             var sw = new StreamWriter(client.GetStream());
                             sw.Write(Message.Ack);
 
-                            client.ReceiveTimeout = DefaultReceiveTimeout;
+                            client.ReceiveTimeout = ReceiveTimeout;
                             m_addresses.Add(address);
                             m_clients.Add(client);
                         }
@@ -115,30 +115,41 @@ namespace Rpi
                 {
                     for (int i = 0; i < m_clients.Count; ++i)
                     {
-                        var c = m_clients[i];
-
-                        // Если есть данные, то обрабатываем запрос.
-                        if (c.Available > 0)
+                        try
                         {
-                            // Берем стрим.
-                            var stream = c.GetStream();
-                            var sr = new StreamReader(stream);
-                            var sw = new StreamWriter(stream);
+                            var c = m_clients[i];
 
-                            // Получаем запрос
-                            var str = sr.ReadLine().Trim();
-                            var req = str.Split(' ');
-                            Logger.WriteLine(this, "Принято сообщение: `{0}`", str);
+                            // Если есть данные, то обрабатываем запрос.
+                            if (c.Available > 0)
+                            {
+                                // Берем стрим.
+                                var stream = c.GetStream();
+                                var sr = new StreamReader(stream);
+                                var sw = new StreamWriter(stream);
 
-                            // Вызываем процедуру обработки запроса.
-                            // ToDo: делать это асинхронно!!!!!!!!!!!!!!!
-                            Logger.WriteLine(this, "Вызывается процедура обработки", str);
-                            var data = m_clientProc(i, Message.GetMessageType(req[0]), req.Skip(1).ToArray());
-                            stream.Write(data, 0, data.Length);
-                            stream.Flush();
+                                // Получаем запрос
+                                var str = sr.ReadLine().Trim();
+                                var req = str.Split(' ');
+                                Logger.WriteLine(this, "Принято сообщение: `{0}`", str);
 
-                            // sr.Close();
-                            // sw.Close();
+                                // Вызываем процедуру обработки запроса.
+                                // ToDo: делать это асинхронно!!!!!!!!!!!!!!!
+                                Logger.WriteLine(this, "Вызывается процедура обработки", str);
+                                var data = m_clientProc(i, Message.GetMessageType(req[0]), req.Skip(1).ToArray());
+                                stream.Write(data, 0, data.Length);
+                                stream.Flush();
+
+                                // sr.Close();
+                                // sw.Close();
+                            }
+                        }
+                        catch (SocketException)
+                        {
+                            Reconnect(i);
+                        }
+                        catch (IOException)
+                        {
+                            Reconnect(i);
                         }
                     }
 
@@ -156,42 +167,6 @@ namespace Rpi
             Logger.WriteLine(this, "Запрос на остановку работы сервера");
             listen = false;
         } // Stop
-
-        /// <summary>
-        /// Отсылка строки клиенту.
-        /// </summary>
-        /// <param name="clientId">Клиент, которому отправляется сообщение.</param>
-        /// <param name="msg">Строка-сообщение.</param>
-        /// <param name="parameters">Параметры, передаваемые клиенту.</param>
-        /// <returns>Истина, если успешно.</returns>
-        /// <exception cref="SocketException"></exception>
-        /// <exception cref="IOException"></exception>
-        [Obsolete("Не использовать этот метод.")]
-        public bool SendString(int clientId, MessageType msg, params object[] parameters)
-        {
-            if (clientId < 0 || clientId >= m_clients.Count)
-            {
-                Logger.WriteLine(this, "Пока нет доступных клиентов");
-                return false;
-            }
-
-            Logger.WriteLine(this, "Клиент №{0} выбран", clientId);
-            var client = m_clients[clientId];
-
-            try
-            {
-                return SendStringToClient(client, msg, true, parameters) != null;
-            }
-            catch (SocketException e)
-            {
-                // ToDo: добавить реконнект и разрыв соединения.
-                throw e;
-            }
-            catch (IOException e)
-            {
-                throw e;
-            }
-        }
 
         /// <summary>
         /// Запросить соединение у нового клиента.
@@ -213,8 +188,8 @@ namespace Rpi
                 var client = new TcpClient(hostname, port);
                 // using (var client = new TcpClient(hostname, port))
                 {
-                    client.Client.SendTimeout = DefaultSendTimeout;
-                    client.Client.ReceiveTimeout = DefaultReceiveTimeout;
+                    client.Client.SendTimeout = SendTimeout;
+                    client.Client.ReceiveTimeout = ReceiveTimeout;
 
                     // Берем стрим.
                     var stream = client.GetStream();
@@ -251,8 +226,8 @@ namespace Rpi
                             // using (var sw = new StreamWriter(client.GetStream()))
                             sw.Write(Message.Ack);
 
-                            client.SendTimeout = DefaultSendTimeout;
-                            client.ReceiveTimeout = DefaultReceiveTimeout;
+                            client.SendTimeout = SendTimeout;
+                            client.ReceiveTimeout = ReceiveTimeout;
                             m_addresses.Add(address);
                             m_clients.Add(client);
                         }
@@ -268,9 +243,35 @@ namespace Rpi
             return true;
         }
 
+        private void Reconnect(int id)
+        {
+            var ep = (m_clients[id].Client.RemoteEndPoint as IPEndPoint);
+
+            for (int i = 0; i < ReconnectAttempsCount; ++i)
+            {
+                if (AddDevice(ep.Address.ToString(), ep.Port))
+                    break;
+                Thread.Sleep(ReconnectTimeout);
+            }
+        }
+
+        private void DropClient(int id)
+        {
+            if (id < 0 || id >= m_clients.Count)
+                throw new ArgumentOutOfRangeException("Неверный идентификатор клиента.");
+
+            var c = m_clients[id];
+            var address = (c.Client.RemoteEndPoint as IPEndPoint).Address;
+
+            if (m_addresses.Contains(address))
+                m_addresses.Remove(address);
+        }
+
         private const int PendingCooldown = 500;
-        private const int DefaultSendTimeout = 10000 * 10;
-        private const int DefaultReceiveTimeout = 10000 * 10;
+        private const int SendTimeout = 10000 * 10;
+        private const int ReceiveTimeout = 10000 * 10;
+        private const int ReconnectAttempsCount = 5;
+        private const int ReconnectTimeout = 1000;
 
         /// <summary>
         /// Количество клиентов на данный момент.
