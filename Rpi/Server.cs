@@ -135,6 +135,7 @@ namespace Rpi
                             Logger.WriteLine(this, "Вызывается процедура обработки", str);
                             var data = m_clientProc(i, Message.GetMessageType(req[0]), req.Skip(1).ToArray());
                             stream.Write(data, 0, data.Length);
+                            stream.Flush();
 
                             // sr.Close();
                             // sw.Close();

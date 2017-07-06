@@ -9,8 +9,26 @@ namespace Rpi
     /// <summary>
     /// Класс, содержащий определения для сообщений между клиентом и серевером.
     /// </summary>
-    public static class Message
+    public class Message
     {
+        public Message(MessageType type, byte[] rawData)
+        {
+            Init(type, rawData);
+        }
+
+        public Message(MessageType type, string stringData)
+        {
+            if (stringData == null)
+                throw new ArgumentNullException();
+
+            Init(type, Encoding.UTF8.GetBytes(stringData));
+        }
+
+        public static implicit operator byte[](Message lhs)
+        {
+            return lhs.Buffer;
+        }
+
         public static string GetMessageString(MessageType type)
         {
             if (message.ContainsKey(type))
@@ -26,6 +44,20 @@ namespace Rpi
                 return messageInv[msg];
             else
                 return MessageType.None;
+        }
+
+        private void Init(MessageType type, byte[] rawData)
+        {
+            if (type == MessageType.None && rawData == null)
+                throw new ArgumentNullException();
+
+            m_type = type;
+            // var msg = Encoding.UTF8.GetBytes(GetMessageString(m_type));
+            m_rawData = new byte[rawData.Length];
+            // m_rawData = new byte[msg.Length + rawData.Length];
+            // Array.Copy(msg, m_rawData, msg.Length);
+            // Array.Copy(rawData, 0, m_rawData, msg.Length, rawData.Length);
+            Array.Copy(rawData, m_rawData, rawData.Length);
         }
 
         /// <summary>
@@ -74,5 +106,11 @@ namespace Rpi
             where true
             select v
             ).ToDictionary(x => x.Value, x => x.Key));
+
+        public byte[] Buffer { get { return m_rawData; } }
+        public MessageType MsgType { get { return m_type; } }
+
+        private MessageType m_type = MessageType.None;
+        private byte[] m_rawData = null;
     }
 }

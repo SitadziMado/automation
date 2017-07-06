@@ -176,6 +176,40 @@ namespace Rpi
             thread.Start();
         }
 
+        /// <summary>
+        /// Хотфикс для притягивания байтов с сервера для .tar.gz.
+        /// </summary>
+        /// <returns>Массив байтов, представляющих упаковку информации.</returns>
+        public byte[] PullBytes()
+        {
+            try
+            {
+                int size = m_client.Client.ReceiveBufferSize;
+                byte[] buffer = new byte[size];
+                List<byte> data = new List<byte>();
+
+                var s = m_client.GetStream();
+
+                while (m_client.Available > 0)
+                {
+                    s.Read(buffer, 0, Math.Min(size, m_client.Available));
+                    data.AddRange(buffer);
+                }
+
+                return data.ToArray();
+            }
+            catch (SocketException e)
+            {
+                throw e;
+            }
+            catch (IOException e)
+            {
+                throw e;
+            }
+
+        }
+
+
         private const int PendingCooldown = 500;
         private const int DefaultSendTimeout = 10000 * 10;
         private const int DefaultReceiveTimeout = 10000 * 10;
