@@ -61,7 +61,19 @@ namespace Rpi
 
         public byte[] ClientProc(int id, MessageType msg, object[] parameters)
         {
-            return Encoding.ASCII.GetBytes("drank, promethazine\n");
+            switch (msg)
+            {
+                case MessageType.RequestIds:
+                    return Encoding.UTF8.GetBytes("ids 1 4 9 16 25 36 49 64 81 100\n");
+
+                case MessageType.RequestData:
+                    return Encoding.UTF8.GetBytes("data\nGOLF WANG");
+
+                default:
+                    break;
+            }
+
+            return Encoding.ASCII.GetBytes("ack\n");
         }
     }
 }

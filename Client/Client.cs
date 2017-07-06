@@ -60,11 +60,20 @@ namespace Rpi
         /// <returns>Истина, если успешно.</returns>
         /// <exception cref="SocketException"></exception>
         /// <exception cref="IOException"></exception>
-        public string SendString(MessageType msg, params object[] parameters)
+        public string SendString(
+            MessageType msg, 
+            bool receiveReply = true,
+            params object[] parameters
+        )
         {
             try
             {
-                return SendStringToClient(m_client, msg, parameters);
+                return SendStringToClient(
+                    m_client, 
+                    msg, 
+                    receiveReply, 
+                    parameters
+                );
             }
             catch (SocketException e)
             {
@@ -73,6 +82,7 @@ namespace Rpi
             }
             catch (IOException e)
             {
+                // ToDo: добавить реконнект и разрыв соединения.
                 throw e;
             }
         }
@@ -180,6 +190,8 @@ namespace Rpi
         /// Хотфикс для притягивания байтов с сервера для .tar.gz.
         /// </summary>
         /// <returns>Массив байтов, представляющих упаковку информации.</returns>
+        /// <exception cref="SocketException"></exception>
+        /// <exception cref="IOException"></exception>
         public byte[] PullBytes()
         {
             try
@@ -190,11 +202,22 @@ namespace Rpi
 
                 var s = m_client.GetStream();
 
-                while (m_client.Available > 0)
+                int waited = 0;
+
+                while (waited < DefaultReceiveTimeout && data.Count == 0)
                 {
-                    s.Read(buffer, 0, Math.Min(size, m_client.Available));
-                    data.AddRange(buffer);
+                    Thread.Sleep(PendingCooldown);
+                    waited += PendingCooldown;
+
+                    while (m_client.Available > 0)
+                    {
+                        s.Read(buffer, 0, Math.Min(size, m_client.Available));
+                        data.AddRange(buffer);
+                    }
                 }
+
+                if (data.Count == 0)
+                    throw new IOException("Не было получено ни одного байта");
 
                 return data.ToArray();
             }
@@ -206,7 +229,6 @@ namespace Rpi
             {
                 throw e;
             }
-
         }
 
 

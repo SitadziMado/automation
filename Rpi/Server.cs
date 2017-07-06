@@ -180,7 +180,7 @@ namespace Rpi
 
             try
             {
-                return SendStringToClient(client, msg, parameters) != null;
+                return SendStringToClient(client, msg, true, parameters) != null;
             }
             catch (SocketException e)
             {

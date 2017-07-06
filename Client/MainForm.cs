@@ -53,8 +53,14 @@ namespace Rpi
 
         private void reqButton_Click(object sender, EventArgs e)
         {
-            client.SendString(Message.RequestIds, 0);
+            client.SendString(MessageType.RequestIds, true, 0);
         }
 
+        private void dataButton_Click(object sender, EventArgs e)
+        {
+            client.SendString(MessageType.RequestData, false, 0);
+            var buffer = client.PullBytes();
+            buffer = null;
+        }
     }
 }

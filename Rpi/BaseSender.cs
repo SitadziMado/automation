@@ -32,7 +32,12 @@ namespace Rpi
         /// <returns>Сообщение при успехе, иначе null.</returns>
         /// <exception cref="SocketException"></exception>
         /// <exception cref="IOException"></exception>
-        protected string SendStringToClient(TcpClient client, MessageType msg, params object[] parameters)
+        protected string SendStringToClient(
+            TcpClient client,
+            MessageType msg,
+            bool receiveReply = true,
+            params object[] parameters
+        )
         {
             Logger.WriteLine(this, "Начало передачи сообщения");
 
@@ -66,9 +71,14 @@ namespace Rpi
                     sw.WriteLine(sb.ToString());
                     sw.Flush();
 
+                    string reply = null;
+
                     // Получаем подтверждение о получении.
-                    var reply = sr.ReadLine();
-                    Logger.WriteLine(this, "Получен ответ: {0}", reply);
+                    if (receiveReply)
+                    {
+                        reply = sr.ReadLine();
+                        Logger.WriteLine(this, "Получен ответ: {0}", reply);
+                    }
 
                     // Сравниваем с тем, что ожидаем.
                     /*if (reply != Message.Ack)
