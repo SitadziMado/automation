@@ -39,7 +39,7 @@ namespace Rpi
 
         private void replyClientButton_Click(object sender, EventArgs e)
         {
-            server.SendString(0, MessageType.SendIds, new int[] { 1, 4, 9, 16, 25 });
+            // server.SendString(0, MessageType.SendIds, new int[] { 1, 4, 9, 16, 25 });
         }
 
         private void tableLayoutPanel1_Paint(object sender, PaintEventArgs e)
