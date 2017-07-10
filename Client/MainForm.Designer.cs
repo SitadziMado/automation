@@ -29,65 +29,13 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
-            this.logTextBox = new System.Windows.Forms.TextBox();
-            this.connectionLabel = new System.Windows.Forms.Label();
-            this.reqButton = new System.Windows.Forms.Button();
             this.autoUpdateTimer = new System.Windows.Forms.Timer(this.components);
-            this.dataButton = new System.Windows.Forms.Button();
-            this.tableLayoutPanel1.SuspendLayout();
+            this.gridDetails = new System.Windows.Forms.TableLayoutPanel();
+            this.nextLabel = new System.Windows.Forms.Label();
+            this.connectionLabel = new System.Windows.Forms.Label();
+            this.currentLabel = new System.Windows.Forms.Label();
+            this.gridDetails.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // tableLayoutPanel1
-            // 
-            this.tableLayoutPanel1.ColumnCount = 1;
-            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.Controls.Add(this.logTextBox, 0, 0);
-            this.tableLayoutPanel1.Controls.Add(this.connectionLabel, 0, 1);
-            this.tableLayoutPanel1.Controls.Add(this.reqButton, 0, 2);
-            this.tableLayoutPanel1.Controls.Add(this.dataButton, 0, 3);
-            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
-            this.tableLayoutPanel1.RowCount = 4;
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tableLayoutPanel1.Size = new System.Drawing.Size(332, 336);
-            this.tableLayoutPanel1.TabIndex = 0;
-            // 
-            // logTextBox
-            // 
-            this.logTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.logTextBox.Location = new System.Drawing.Point(3, 3);
-            this.logTextBox.Multiline = true;
-            this.logTextBox.Name = "logTextBox";
-            this.logTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.logTextBox.Size = new System.Drawing.Size(326, 254);
-            this.logTextBox.TabIndex = 0;
-            // 
-            // connectionLabel
-            // 
-            this.connectionLabel.Dock = System.Windows.Forms.DockStyle.Top;
-            this.connectionLabel.ForeColor = System.Drawing.Color.Red;
-            this.connectionLabel.Location = new System.Drawing.Point(3, 260);
-            this.connectionLabel.Name = "connectionLabel";
-            this.connectionLabel.Size = new System.Drawing.Size(326, 18);
-            this.connectionLabel.TabIndex = 1;
-            this.connectionLabel.Text = "Нет соединения";
-            this.connectionLabel.TextAlign = System.Drawing.ContentAlignment.TopCenter;
-            // 
-            // reqButton
-            // 
-            this.reqButton.Dock = System.Windows.Forms.DockStyle.Top;
-            this.reqButton.Location = new System.Drawing.Point(3, 281);
-            this.reqButton.Name = "reqButton";
-            this.reqButton.Size = new System.Drawing.Size(326, 23);
-            this.reqButton.TabIndex = 2;
-            this.reqButton.Text = "Запросить идентификаторы";
-            this.reqButton.UseVisualStyleBackColor = true;
-            this.reqButton.Click += new System.EventHandler(this.reqButton_Click);
             // 
             // autoUpdateTimer
             // 
@@ -95,41 +43,80 @@
             this.autoUpdateTimer.Interval = 1000;
             this.autoUpdateTimer.Tick += new System.EventHandler(this.autoUpdateTimer_Tick);
             // 
-            // dataButton
+            // gridDetails
             // 
-            this.dataButton.Dock = System.Windows.Forms.DockStyle.Top;
-            this.dataButton.Location = new System.Drawing.Point(3, 310);
-            this.dataButton.Name = "dataButton";
-            this.dataButton.Size = new System.Drawing.Size(326, 23);
-            this.dataButton.TabIndex = 3;
-            this.dataButton.Text = "Запросить информацию";
-            this.dataButton.UseVisualStyleBackColor = true;
-            this.dataButton.Click += new System.EventHandler(this.dataButton_Click);
+            this.gridDetails.ColumnCount = 1;
+            this.gridDetails.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.gridDetails.Controls.Add(this.nextLabel, 0, 2);
+            this.gridDetails.Controls.Add(this.connectionLabel, 0, 0);
+            this.gridDetails.Controls.Add(this.currentLabel, 0, 1);
+            this.gridDetails.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.gridDetails.Location = new System.Drawing.Point(0, 0);
+            this.gridDetails.Name = "gridDetails";
+            this.gridDetails.RowCount = 3;
+            this.gridDetails.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.gridDetails.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.gridDetails.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            this.gridDetails.Size = new System.Drawing.Size(332, 336);
+            this.gridDetails.TabIndex = 0;
+            // 
+            // nextLabel
+            // 
+            this.nextLabel.AutoSize = true;
+            this.nextLabel.Font = new System.Drawing.Font("Verdana", 20.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.nextLabel.Location = new System.Drawing.Point(3, 184);
+            this.nextLabel.Name = "nextLabel";
+            this.nextLabel.Size = new System.Drawing.Size(289, 32);
+            this.nextLabel.TabIndex = 2;
+            this.nextLabel.Text = "Следующий заказ: ";
+            // 
+            // connectionLabel
+            // 
+            this.connectionLabel.AutoSize = true;
+            this.connectionLabel.Font = new System.Drawing.Font("Verdana", 20.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.connectionLabel.ForeColor = System.Drawing.Color.Red;
+            this.connectionLabel.Location = new System.Drawing.Point(3, 0);
+            this.connectionLabel.Name = "connectionLabel";
+            this.connectionLabel.Size = new System.Drawing.Size(237, 32);
+            this.connectionLabel.TabIndex = 0;
+            this.connectionLabel.Text = "Нет соединения";
+            // 
+            // currentLabel
+            // 
+            this.currentLabel.AutoSize = true;
+            this.currentLabel.Font = new System.Drawing.Font("Verdana", 20.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.currentLabel.Location = new System.Drawing.Point(3, 32);
+            this.currentLabel.Name = "currentLabel";
+            this.currentLabel.Size = new System.Drawing.Size(236, 32);
+            this.currentLabel.TabIndex = 1;
+            this.currentLabel.Text = "Текущий заказ:";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(332, 336);
-            this.Controls.Add(this.tableLayoutPanel1);
+            this.Controls.Add(this.gridDetails);
             this.Name = "Form1";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Клиент";
+            this.TopMost = true;
+            this.WindowState = System.Windows.Forms.FormWindowState.Maximized;
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Form1_FormClosed);
             this.Load += new System.EventHandler(this.Form1_Load);
-            this.tableLayoutPanel1.ResumeLayout(false);
-            this.tableLayoutPanel1.PerformLayout();
+            this.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.Form1_KeyPress);
+            this.gridDetails.ResumeLayout(false);
+            this.gridDetails.PerformLayout();
             this.ResumeLayout(false);
 
         }
 
         #endregion
-
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
-        private System.Windows.Forms.TextBox logTextBox;
-        private System.Windows.Forms.Label connectionLabel;
         private System.Windows.Forms.Timer autoUpdateTimer;
-        private System.Windows.Forms.Button reqButton;
-        private System.Windows.Forms.Button dataButton;
+        private System.Windows.Forms.TableLayoutPanel gridDetails;
+        private System.Windows.Forms.Label nextLabel;
+        private System.Windows.Forms.Label connectionLabel;
+        private System.Windows.Forms.Label currentLabel;
     }
 }
 

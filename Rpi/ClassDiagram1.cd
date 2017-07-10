@@ -38,16 +38,9 @@
   <Enum Name="Rpi.MessageType">
     <Position X="2.75" Y="3.25" Width="1.75" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAQIAAAAAAAEAAAAAAAEAAAAAAAAAAAAMAAEA=</HashCode>
+      <HashCode>AAAAAAAAQIAAAAAAAEAAAAAAAEAAAAAAAAAAAAMAAEg=</HashCode>
       <FileName>MessageType.cs</FileName>
     </TypeIdentifier>
   </Enum>
-  <Delegate Name="Rpi.ClientProc">
-    <Position X="2.75" Y="5.5" Width="1.75" />
-    <TypeIdentifier>
-      <HashCode>ABAAAAAAAAAAAAAAAAAAABAAAAAEAAAAAAAAAAAAAAA=</HashCode>
-      <FileName>Server.cs</FileName>
-    </TypeIdentifier>
-  </Delegate>
   <Font Name="Segoe UI" Size="9" />
 </ClassDiagram>

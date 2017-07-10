@@ -18,5 +18,6 @@ namespace Rpi
         RequestData,
         SendIds,
         SendData,
+        Finish,
     }
 }

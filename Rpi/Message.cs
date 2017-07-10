@@ -90,6 +90,11 @@ namespace Rpi
         /// </summary>
         public const string SendData = "data";
 
+        /// <summary>
+        /// Завершение заказа.
+        /// </summary>
+        public const string Finish = "finish";
+
         private static Dictionary<MessageType, string> message = new Dictionary<MessageType, string>()
         {
             { MessageType.Greet, Greet },
@@ -98,6 +103,7 @@ namespace Rpi
             { MessageType.RequestData, RequestData },
             { MessageType.SendIds, SendIds },
             { MessageType.SendData, SendData },
+            { MessageType.Finish, Finish },
         };
         private static Dictionary<string, MessageType> messageInv = new Dictionary<string, MessageType>(
             (

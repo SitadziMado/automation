@@ -258,9 +258,6 @@ namespace Rpi
         /// </summary>
         public bool Connected { get { return m_client != null; } }
 
-        /// ToDo: пофиксить это дело
-        // public ConnectionState Connection { get { return ConnectionState.NotConnected; } }
-
         /// <summary>
         /// Адрес сервера.
         /// </summary>
