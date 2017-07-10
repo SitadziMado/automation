@@ -111,6 +111,7 @@ namespace Rpi
 
                 if (Message.GetMessageType(reply) == MessageType.Ack)
                 {
+                    m_pulled.Remove(m_orders[0].Id);
                     m_orders.RemoveAt(0);
                 }
             }
