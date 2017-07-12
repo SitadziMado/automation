@@ -1,4 +1,6 @@
-﻿using ICSharpCode.SharpZipLib.Tar;
+﻿#define WINDOWS
+
+using ICSharpCode.SharpZipLib.Tar;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -22,7 +24,6 @@ namespace Rpi
 #else
         public const string TemporaryPrefix = @"/home/pi/Debug/temp";
 #endif
-
 
         private Client m_client;
         private bool m_listen = true;
@@ -107,7 +108,7 @@ namespace Rpi
         {
             if (e.KeyChar == '#' && m_orders.Count > 0)
             {
-                var reply = m_client.SendString(MessageType.Finish, true, m_orders[0]);
+                var reply = m_client.SendString(MessageType.Finish, true, m_orders[0].Id);
 
                 if (Message.GetMessageType(reply) == MessageType.Ack)
                 {
@@ -128,14 +129,14 @@ namespace Rpi
             using (var stream = new MemoryStream(tarGz))
             {
                 var archive = TarArchive.CreateInputTarArchive(stream);
+
                 try
                 {
                     archive.ExtractContents(temporaryDir);
                 }
                 catch (TarException e)
                 {
-                    Console.WriteLine(e.Message);
-                    // inProcessIds.Remove(id);
+                    Logger.WriteLine(this, e.Message);
                 }
 
                 using (StreamReader sr = new StreamReader(temporaryInfo))
@@ -152,7 +153,7 @@ namespace Rpi
 
                     for (int i = 0; i < n; ++i)
                     {
-                        string[] info = sr.ReadLine().Split('$');
+                        string[] info = sr.ReadLine().Split(' ', '$');
                     }
 
                     byte[] prog = File.ReadAllBytes(temporaryProg);
@@ -169,7 +170,7 @@ namespace Rpi
                     // InternalSetUpdated();
                 }
                 archive.Close();
-                Console.WriteLine("Получен .TAR от сервера.");
+                Logger.WriteLine(this, "Получен .TAR от сервера.");
             }
         }
     }

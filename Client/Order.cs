@@ -14,6 +14,7 @@ namespace Rpi
             Material = "Сферический в вакууме.";
             Gas = GasType.None;
             Notes = "Заказ по умолчанию.";
+            Written = false;
         }
 
         public Order(
@@ -29,6 +30,7 @@ namespace Rpi
             Gas = gas;
             Notes = notes;
             Prog = program;
+            Written = false;
         }
 
         public override string ToString()
@@ -47,5 +49,6 @@ namespace Rpi
         public GasType Gas { get; set; }
         public string Notes { get; set; }
         public byte[] Prog { get; set; }
+        public bool Written { get; set; }
     }
 }
